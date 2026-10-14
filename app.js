@@ -160,11 +160,14 @@ async function shareSite() {
 }
 
 /* ---------------- Donations ---------------- */
+// PayPal's Donate flow isn't available for Saudi accounts, so tips use a
+// regular checkout link (amount left empty = the visitor types any amount).
 function paypalUrl(amount) {
   const p = new URLSearchParams({
-    cmd: '_donations',
+    cmd: '_xclick',
     business: CONFIG.paypalEmail,
-    item_name: `Support ${CONFIG.siteName} - keep it free for everyone`,
+    item_name: `Tip for ${CONFIG.siteName} - keep it free for everyone`,
+    no_shipping: '1',
     currency_code: CONFIG.currency,
     return: CONFIG.siteUrl + '#thanks',
     cancel_return: CONFIG.siteUrl,
