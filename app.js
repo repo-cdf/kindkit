@@ -19,6 +19,15 @@ const CONFIG = {
   // to also fill Kindkit's own ad spaces.
   adsenseClient: '',
   adsenseSlots: { home: '', toolTop: '', toolBottom: '' },
+
+  // Adsterra ad units (publisher dashboard: beta.publishers.adsterra.com)
+  adsterra: {
+    host: 'https://bauval.org',
+    native: '72df87364e9df62ec9c2e66304df605a',   // home page
+    banner728x90: 'a759d28079132d88e05907e5c6e67e76', // above tools (desktop)
+    banner320x50: '606a341ab3645a1ad03056c96eb92c09', // above tools (phones)
+    banner300x250: '5ed5c579b5a3e67156ec28732639b522', // below tools
+  },
 };
 /* ------------------------------------------------------- */
 
@@ -196,6 +205,7 @@ function fillAds(root) {
       slot.dataset.filled = '1';
       return;
     }
+    if (renderAdsterra(slot)) return;
     const id = CONFIG.adsenseSlots[slot.dataset.slot];
     if (!adsLoaded || !id) return;
     slot.hidden = false;
@@ -203,6 +213,52 @@ function fillAds(root) {
     slot.dataset.filled = '1';
     try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch (e) { console.warn(e); }
   });
+}
+
+// Each Adsterra banner lives in its own frame so the units never clash.
+function adsterraBanner(key, w, h) {
+  const f = document.createElement('iframe');
+  f.width = w;
+  f.height = h;
+  f.title = 'Advertisement';
+  f.setAttribute('scrolling', 'no');
+  f.style.border = '0';
+  f.srcdoc = `<!doctype html><html><head><style>html,body{margin:0;padding:0;overflow:hidden;background:transparent}</style></head><body>` +
+    `<script>atOptions={'key':'${key}','format':'iframe','height':${h},'width':${w},'params':{}};<\/script>` +
+    `<script src="${CONFIG.adsterra.host}/22/${key}"><\/script></body></html>`;
+  return f;
+}
+
+// Returns true when the slot was handled by Adsterra.
+function renderAdsterra(slot) {
+  const A = CONFIG.adsterra;
+  if (!A || !A.host) return false;
+  const name = slot.dataset.slot;
+  if (name === 'home') {
+    if (!A.native) return false;
+    slot.hidden = false;
+    slot.dataset.filled = '1';
+    slot.insertAdjacentHTML('beforeend', `<span class="ad-label">Advertisement</span><div id="container-${esc(A.native)}"></div>`);
+    const s = document.createElement('script');
+    s.async = true;
+    s.setAttribute('data-cfasync', 'false');
+    s.src = `${A.host}/21/${A.native}`;
+    slot.appendChild(s);
+    return true;
+  }
+  // Tool-page banners refresh each time a tool is opened (like a new page view).
+  let unit;
+  if (name === 'toolTop') {
+    unit = window.innerWidth >= 800 && A.banner728x90 ? [A.banner728x90, 728, 90] : A.banner320x50 ? [A.banner320x50, 320, 50] : null;
+  } else if (name === 'toolBottom' && A.banner300x250) {
+    unit = [A.banner300x250, 300, 250];
+  }
+  if (!unit) return false;
+  slot.hidden = false;
+  slot.querySelectorAll('.ad-label, iframe').forEach(n => n.remove());
+  slot.insertAdjacentHTML('beforeend', '<span class="ad-label">Advertisement</span>');
+  slot.appendChild(adsterraBanner(...unit));
+  return true;
 }
 
 /* ---------------- File UI building blocks ---------------- */
