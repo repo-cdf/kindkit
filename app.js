@@ -449,9 +449,12 @@ function showView(id) {
   fillAds($('#' + id));
 }
 
+// Tool pages (merge-pdf.html etc.) say which tool they are via <body data-tool>.
+const pageTool = () => document.body.dataset.tool;
+
 function route() {
   const h = decodeURIComponent(location.hash.slice(1));
-  const tool = TOOLS.find(t => t.id === h);
+  const tool = TOOLS.find(t => t.id === h) || TOOLS.find(t => t.id === pageTool());
   if (tool) return openTool(tool);
   document.title = 'Kindkit — Free PDF & Image Tools. No Sign-up, No Uploads';
   if (h === 'thanks') {
@@ -468,7 +471,7 @@ function route() {
 }
 
 function openTool(t) {
-  document.title = `${t.name} — Free, No Upload, No Sign-up | Kindkit`;
+  if (t.id !== pageTool()) document.title = `${t.name} — Free, No Upload, No Sign-up | Kindkit`;
   $('#tool-icon').className = 'tool-ic big cat-' + t.cat;
   $('#tool-icon').innerHTML = icon(t.icon);
   $('#tool-title').textContent = t.name;
@@ -483,7 +486,7 @@ function openTool(t) {
 }
 
 function cardHtml(t) {
-  return `<a class="tool-card" href="#${t.id}" data-cat="${t.cat}">
+  return `<a class="tool-card" href="${t.id}.html" data-cat="${t.cat}">
     <span class="tool-ic cat-${t.cat}">${icon(t.icon)}</span>
     <span><strong>${esc(t.name)}</strong><span class="desc">${esc(t.short)}</span></span>
   </a>`;
@@ -502,20 +505,22 @@ function renderGrid() {
 }
 
 function initHome() {
-  $('#tool-count').textContent = TOOLS.length;
-  $$('.chip').forEach(c => c.addEventListener('click', () => {
-    activeFilter = c.dataset.filter;
-    $$('.chip').forEach(x => x.setAttribute('aria-pressed', String(x === c)));
+  if ($('#tool-grid')) {
+    $('#tool-count').textContent = TOOLS.length;
+    $$('.chip').forEach(c => c.addEventListener('click', () => {
+      activeFilter = c.dataset.filter;
+      $$('.chip').forEach(x => x.setAttribute('aria-pressed', String(x === c)));
+      renderGrid();
+    }));
+    $('#search').addEventListener('input', renderGrid);
+    $('#search').addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        const first = $('#tool-grid .tool-card');
+        if (first) location.href = first.href;
+      }
+    });
     renderGrid();
-  }));
-  $('#search').addEventListener('input', renderGrid);
-  $('#search').addEventListener('keydown', e => {
-    if (e.key === 'Enter') {
-      const first = $('#tool-grid .tool-card');
-      if (first) location.hash = first.getAttribute('href');
-    }
-  });
-  renderGrid();
+  }
 
   // Donation amounts
   const amounts = $('#amounts');
