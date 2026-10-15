@@ -23,7 +23,7 @@ const CONFIG = {
   // Adsterra ad units (publisher dashboard: beta.publishers.adsterra.com)
   adsterra: {
     host: 'https://bauval.org',
-    native: '72df87364e9df62ec9c2e66304df605a',   // home page
+    native: '',   // home page — native widget removed 2026-10-15 (attracted dating/gambling ads)
     banner728x90: 'a759d28079132d88e05907e5c6e67e76', // above tools (desktop)
     banner320x50: '606a341ab3645a1ad03056c96eb92c09', // above tools (phones)
     banner300x250: '5ed5c579b5a3e67156ec28732639b522', // below tools
